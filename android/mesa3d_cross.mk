@@ -252,13 +252,15 @@ $(MESON_GEN_FILES_TARGET): PREPROCESS_MESON_CONFIGS:=$(PREPROCESS_MESON_CONFIGS)
 $(MESON_GEN_FILES_TARGET): MESON_GEN_DIR:=$(MESON_GEN_DIR)
 $(MESON_GEN_FILES_TARGET): $(sort $(shell find -L $(MESA3D_TOP) -not -path '*/\.*'))
 	mkdir -p $(dir $@)
+	echo -e '#!/bin/bash -e\nexec ld.lld "$${@/-lc++/}"' > $(dir $@)/ld.lld
+	chmod +x $(dir $@)/ld.lld
 	echo -e "[properties]\n"                                                                                                  \
 		"c_args = [$(foreach flag,$(call filter-c-flags,$(m-c-flags)),'$(flag)', ) \
                            $(foreach inc,$(nospace-includes),'$(call abs-include,$(inc))', )'']\n" \
 		"cpp_args = [$(foreach flag,$(call filter-c-flags,$(m-cpp-flags)),'$(flag)', ) \
                              $(foreach inc,$(nospace-includes),'$(call abs-include,$(inc))', )'']\n" \
 		"c_link_args = [$(foreach flag, $(m-lld-flags-cleaned),'$(flag)',)'']\n"                                          \
-		"cpp_link_args = [$(foreach flag, $(m-lld-flags-cleaned),'$(flag)',)'']\n"                                        \
+		"cpp_link_args = ['-B$(call relative-to-absolute,$(MESON_GEN_DIR))', $(foreach flag, $(m-lld-flags-cleaned),'$(flag)',)'']\n"                                        \
 		"bindgen_clang_arguments = ['--target=$(subst armv7a,armv7,$(PRIVATE_TARGET_TRIPLE))']\n"                         \
 		"needs_exe_wrapper = true\n"                                                                                      \
 		"skip_sanity_check = true\n"                                                                                      \
